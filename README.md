@@ -50,11 +50,18 @@
 	```
 
 ## Usages
-- in gvim (or vim) type the following
+- in gvim (or vim) type the following	
 	```
 	<Leader>sb
 	```
+	- It will toggle (on/off) the Sidebar
 - By default, \<Leader\> key is '\\', therefore, type the following, that's all
 	```
 	\sb
+	```
+
+## Options
+- If you dont want 'Tagbar' with Sidebar (i.e. Sidebar only with NERDTree), add following in your .vimrc
+	```
+ 	let g:sidebar_with_tagbar=0
 	```
