@@ -54,7 +54,7 @@
 	```
 	<Leader>sb
 	```
-- By default, <Leader> key is '\', therefore, type the following, that's all
+- By default, \<Leader\> key is '\\', therefore, type the following, that's all
 	```
 	\sb
 	```
