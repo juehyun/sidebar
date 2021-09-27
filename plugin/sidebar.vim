@@ -29,16 +29,15 @@
 map <Leader>sb :call<space>SidebarToggle()<CR>
 
 "use only one instance of NERDTree
-if !exists('g:sidebar_nerdtree_started')
-	let g:sidebar_nerdtree_started=0
+if !exists('g:sidebar_enabled')
+	let g:sidebar_enabled=0
 	let g:sidebar_with_tagbar=1| "set to 0, sidebar without tagbar
-	let g:sidebar_nerdtree_single_buffer=0| "it should be 0
 endif
 
 "start sidebar and register 'autocmd BufEnter'
 function! SidebarToggle()
-	if !g:sidebar_nerdtree_started
-		let g:sidebar_nerdtree_started=1
+	if !g:sidebar_enabled
+		let g:sidebar_enabled=1
 		call SidebarCallback()
 		autocmd! BufEnter * call SidebarCallback()
 		echo "Sidebar enabled, register autocmd"
@@ -49,7 +48,7 @@ function! SidebarToggle()
 				silent exe "bwipeout " . bufnr(w)
 			endif
 		endfor
-		let g:sidebar_nerdtree_started=0
+		let g:sidebar_enabled=0
 		echo "Sidebar disabled"
 	endif
 endfunction
@@ -67,18 +66,11 @@ endfunction
 "update sidebar (update NERDTree)
 function! SidebarUpdateNERDTree()
 	
-	if(g:sidebar_nerdtree_single_buffer)
-		"
-		"(issue) Use only one instance of NERDTree : in case of multiple tabs are open, NERDTreeMirror iterates foreach tabs. it cause delay
-		"
-		if (g:sidebar_nerdtree_started==1 && bufwinnr('NERD_tree')==-1 ) | NERDTreeMirror | endif | "bufwinnr('NERD') : check for current tab
-		NERDTreeFind | wincmd p | "NERDTreeFind will create NERD_tree_x buffer if not exist in current tab
-	else
-		NERDTreeFind | wincmd p | "NERDTreeFind will create NERD_tree_x buffer if not exist in current tab
-	endif
-	
-	
-	let g:sidebar_nerdtree_started=1
+"	"(issue) Use only one instance of NERDTree : in case of multiple tabs are open, NERDTreeMirror iterates foreach tabs. it cause delay
+"	if (g:sidebar_enabled==1 && bufwinnr('NERD_tree')==-1 ) | NERDTreeMirror | endif | "bufwinnr('NERD') : check for current tab
+"	NERDTreeFind | wincmd p | "NERDTreeFind will create NERD_tree_x buffer if not exist in current tab
+
+	NERDTreeFind | wincmd p | "NERDTreeFind will create NERD_tree_x buffer if not exist in current tab
 endfunction
 
 "update sidebar (open Tagbar if not in this tab)
@@ -91,6 +83,7 @@ endfunction
 
 "callback function for 'autocmd BufEnter'
 function! SidebarCallback()
+	if !g:sidebar_enabled | return | endif
 	if !SidebarChkValid() | return | endif
 	call SidebarUpdateNERDTree()
 	call SidebarUpdateTagbar()
