@@ -32,17 +32,15 @@ map <Leader>sb :call<space>SidebarToggle()<CR>
 if !exists('g:sidebar_nerdtree_started')
 	let g:sidebar_nerdtree_started=0
 	let g:sidebar_with_tagbar=1| "set to 0, sidebar without tagbar
+	let g:sidebar_nerdtree_single_buffer=0| "it should be 0
 endif
 
 "start sidebar and register 'autocmd BufEnter'
 function! SidebarToggle()
 	if !g:sidebar_nerdtree_started
-		NERDTreeFind | wincmd p
-		if g:sidebar_with_tagbar
-			Tagbar
-		endif
 		let g:sidebar_nerdtree_started=1
-		autocmd! BufEnter * call SidebarUpdate()
+		call SidebarCallback()
+		autocmd! BufEnter * call SidebarCallback()
 		echo "Sidebar enabled, register autocmd"
 	else
 		autocmd! BufEnter *
@@ -56,25 +54,45 @@ function! SidebarToggle()
 	endif
 endfunction
 
-"callback function for 'autocmd BufEnter'
-function! SidebarUpdate()
-	if (line('$') == 1 && getline(1) == '') | return | endif| "check empty buffer (:help command will start with empty buffer)
-	if g:sidebar_nerdtree_started==0 | return | endif
-	"if &readonly | return | endif
-	if &filetype=='help' | return | endif
+"check current buffer is valid for updating sidebar, otherwise return
+function! SidebarChkValid()
+	if (line('$') == 1 && getline(1) == '') | return 0 | endif "empty buffer (:help command will start with empty buffer)
+	"if &readonly | return 0 | endif
+	if &filetype=='help' | return 0 | endif
 	let l:buf_nm = bufname("%")
-	if (l:buf_nm[0:8]=="NERD_tree" || l:buf_nm[0:9]=="__Tagbar__") | return | endif
+	if (l:buf_nm[0:8]=="NERD_tree" || l:buf_nm[0:9]=="__Tagbar__") | return 0 | endif
+	return 1
+endfunction
 
-	"use only one instance of NERDTree
-	if (g:sidebar_nerdtree_started==1 && bufwinnr('NERD_tree')==-1 ) | NERDTreeMirror | endif| "bufnr('NERD') : check for all tabs, bufwinnr('NERD') : check for current tab
-	NERDTreeFind | wincmd p| "NERDTreeFind will execute NERDTree if NERDTree not exist
-	let g:sidebar_nerdtree_started=1
-
-	"Tagbar not in this tab, open it
-	if g:sidebar_with_tagbar
-		if !tagbar#IsOpen()
-			Tagbar
-		endif
+"update sidebar (update NERDTree)
+function! SidebarUpdateNERDTree()
+	
+	if(g:sidebar_nerdtree_single_buffer)
+		"
+		"(issue) Use only one instance of NERDTree : in case of multiple tabs are open, NERDTreeMirror iterates foreach tabs. it cause delay
+		"
+		if (g:sidebar_nerdtree_started==1 && bufwinnr('NERD_tree')==-1 ) | NERDTreeMirror | endif | "bufwinnr('NERD') : check for current tab
+		NERDTreeFind | wincmd p | "NERDTreeFind will create NERD_tree_x buffer if not exist in current tab
+	else
+		NERDTreeFind | wincmd p | "NERDTreeFind will create NERD_tree_x buffer if not exist in current tab
 	endif
+	
+	
+	let g:sidebar_nerdtree_started=1
+endfunction
+
+"update sidebar (open Tagbar if not in this tab)
+function! SidebarUpdateTagbar()
+	if !g:sidebar_with_tagbar | return | endif
+	if !tagbar#IsOpen()
+		Tagbar
+	endif
+endfunction
+
+"callback function for 'autocmd BufEnter'
+function! SidebarCallback()
+	if !SidebarChkValid() | return | endif
+	call SidebarUpdateNERDTree()
+	call SidebarUpdateTagbar()
 endfunction
 
