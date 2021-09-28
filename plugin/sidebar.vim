@@ -40,7 +40,7 @@ function! SidebarToggle()
 		let g:sidebar_enabled=1
 		call SidebarCallback()
 		autocmd! BufEnter * call SidebarCallback()
-		echo "Sidebar enabled, register autocmd"
+		echo "Sidebar enabled"
 	else
 		autocmd! BufEnter *
 		for w in range(1,bufnr('$'))
@@ -53,39 +53,33 @@ function! SidebarToggle()
 	endif
 endfunction
 
-"check current buffer is valid for updating sidebar, otherwise return
-function! SidebarChkValid()
-	if (line('$') == 1 && getline(1) == '') | return 0 | endif "empty buffer (:help command will start with empty buffer)
-	"if &readonly | return 0 | endif
-	if &filetype=='help' | return 0 | endif
+"callback function for 'autocmd BufEnter'
+function! SidebarCallback()
+	if !g:sidebar_enabled | return | endif
+	"--------------------------------------------------------------------------------
+	"check current buffer is valid for updating sidebar, otherwise return
+	"--------------------------------------------------------------------------------
 	let l:buf_nm = bufname("%")
 	if (l:buf_nm[0:8]=="NERD_tree" || l:buf_nm[0:9]=="__Tagbar__") | return 0 | endif
-	return 1
-endfunction
+	"if &readonly | return 0 | endif
+	if &filetype=='help' | return 0 | endif
+	if (bufname('%')=='' && line('$') == 1 && getline(1) == '') | return | endif | "empty buffer (:help command will start with empty buffer)
 
-"update sidebar (update NERDTree)
-function! SidebarUpdateNERDTree()
-	
-"	"(issue) Use only one instance of NERDTree : in case of multiple tabs are open, NERDTreeMirror iterates foreach tabs. it cause delay
-"	if (g:sidebar_enabled==1 && bufwinnr('NERD_tree')==-1 ) | NERDTreeMirror | endif | "bufwinnr('NERD') : check for current tab
-"	NERDTreeFind | wincmd p | "NERDTreeFind will create NERD_tree_x buffer if not exist in current tab
+	"--------------------------------------------------------------------------------
+	"update sidebar (update NERDTree)
+	"--------------------------------------------------------------------------------
+	"Use only one instance of NERDTree, (issue) in case of multiple tabs are open, NERDTreeMirror iterates foreach tabs. it cause delay
+	"if (g:sidebar_enabled==1 && bufwinnr('NERD_tree')==-1 ) | NERDTreeMirror | endif | "bufwinnr('NERD') : check for current tab
+	"NERDTreeFind | wincmd p | "NERDTreeFind will create NERD_tree_x buffer if not exist in current tab
 
 	NERDTreeFind | wincmd p | "NERDTreeFind will create NERD_tree_x buffer if not exist in current tab
-endfunction
 
-"update sidebar (open Tagbar if not in this tab)
-function! SidebarUpdateTagbar()
+	"--------------------------------------------------------------------------------
+	"update sidebar (open Tagbar if not in this tab)
+	"--------------------------------------------------------------------------------
 	if !g:sidebar_with_tagbar | return | endif
 	if !tagbar#IsOpen()
 		Tagbar
 	endif
-endfunction
-
-"callback function for 'autocmd BufEnter'
-function! SidebarCallback()
-	if !g:sidebar_enabled | return | endif
-	if !SidebarChkValid() | return | endif
-	call SidebarUpdateNERDTree()
-	call SidebarUpdateTagbar()
 endfunction
 
